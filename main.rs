@@ -23,6 +23,14 @@ mod platform {
     pub mod drivers;
 }
 
+#[cfg(target_arch = "x86_64")]
+#[path = "arch/x86_64/"]
+mod platform {
+    pub mod cpu;
+    pub mod io;
+    pub mod drivers;
+}
+
 #[cfg(target_arch = "arm")]
 #[path = "arch/arm/"]
 mod platform {
