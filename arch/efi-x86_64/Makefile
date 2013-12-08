@@ -29,16 +29,16 @@ MODS := $(wildcard ../../*/*.rs) $(wildcard */*.rs)
 
 .DELETE_ON_ERROR:
 
-all: boot.efi
+all: boot/boot.efi
 
-%.o: ../../%.rs $(MODS)
-	cd ../..; $(RUSTC) -O --target $(TARGET) --lib -c $*.rs -o arch/x86_64/$@
+%.o: ../../../%.rs $(MODS)
+	$(RUSTC) -O --target $(TARGET) --lib -c ../../main.rs -o boot/main.o
 
 %.o: %.rs
 	$(RUSTC) -O --target $(TARGET) --lib -c $^ -o $@
 	objcopy -W rust_abi_version $@
 
-boot/boot.elf: main.o boot.o
+boot/boot.elf: boot/main.o boot/boot.o
 	ld -nostdlib -znocombreloc -T $(LDS) -shared -Bsymbolic -L/usr/lib /usr/lib/crt0-efi-x86_64.o $^ -o $@ -lefi -lgnuefi $(LIB_GCC)
 
 boot/boot.efi: boot/boot.elf
@@ -48,14 +48,14 @@ boot/boot.efi: boot/boot.elf
 			--target=efi-app-x86_64 $^ $@
 
 run: boot/boot.efi
-	$(QEMU) -L $(OVMF_ROOT) -hda fat:. -no-kvm -m 32
+	$(QEMU) -L $(OVMF_ROOT) -hda fat:boot -no-kvm -m 32
 
-debug: boot/boot.elf
+debug: boot/boot.elf boot/boot.efi
 	tmux new-session -d -s rustboot
 	tmux new-window -t rustboot:1 "$(QEMU) -L $(OVMF_ROOT) -hda fat:boot -no-kvm -m 64 -s -S"
-	tmux split-window -t rustboot "$(GDB) -ex 'target remote localhost:1234' -ex 'symbol-file $^'"
+	tmux split-window -t rustboot "$(GDB) -ex 'target remote localhost:1234' -ex 'symbol-file boot/boot.elf'"
 	tmux a -t rustboot
 	tmux kill-session -t rustboot
 
 clean:
-	rm -f *.bin *.o *.img
+	rm -f boot/*.{o,efi,elf}
