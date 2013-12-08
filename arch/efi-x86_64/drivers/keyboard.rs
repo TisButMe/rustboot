@@ -41,49 +41,28 @@ unsafe fn keypress(code: u32) {
 
 #[fixed_stack_segment]
 #[inline(never)]
-pub unsafe fn isr_addr() -> u32 {
-    0 as u32
-}
+pub unsafe fn isr_addr() -> u64 {
+    let mut code: u32;
 
-/*#[fixed_stack_segment]
-#[inline(never)]
-pub unsafe fn isr_addr() {
-    let mut ptr: u32;
-
-    // push   ebp
-    // mov    ebp,esp
-    // push   esi
-    // push   eax
-    // mov    esi,esp
-
-    asm!(".word 0xa80f
-          .word 0xa00f
-          .byte 0x06
-          .byte 0x1e
-          pusha
+    // 0x60, 0x61 are instructions pusha(d), popa(d)
+    asm!("jmp skip_isr_addr
+      isr_addr_asm:
+          .byte 0x60
 
           xor eax, eax
-          in al, 60h
-          push eax"
-        : "=A"(ptr) :: "esp" : "intel");
-          keypress(ptr);
-    asm!("pop eax
-          mov dx, 20h
+          in al, 60h"
+        : "=A"(code) ::: "intel");
+          keypress(code);
+    asm!("mov dx, 20h
           mov al, dl
           out dx, al
 
-          popa
-          .byte 0x1f
-          .byte 0x07
-          .word 0xa10f
-          .word 0xa90f
-          add esp, 4
-          pop esi
-          pop ebp
-          iretd"
+          .byte 0x61
+          iretq
+      skip_isr_addr:"
         :::: "intel");
-        // add    esp,0x4
-        // pop    esi
-        // pop    ebp
-        // ret
-}*/
+
+    isr_addr_asm as u64
+}
+
+extern "C" { pub fn isr_addr_asm(); }

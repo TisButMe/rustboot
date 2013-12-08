@@ -5,7 +5,7 @@
 #[no_std];
 #[feature(asm, globs, macro_rules)];
 
-use platform::*;
+use platform::{cpu, io, drivers};
 
 #[path = "rust-core/core/mod.rs"]
 mod core;

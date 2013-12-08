@@ -11,7 +11,7 @@ struct table {
 impl table {
     pub unsafe fn new() -> table {
         let (table, _) = memory::allocator.alloc(0x800);
-        let (reg, _) = memory::allocator.alloc(6);
+        let (reg, _) = memory::allocator.alloc(10);
         *(reg as *mut idt::reg) = idt::reg::new(table as *idt::table);
 
         table {
@@ -20,18 +20,18 @@ impl table {
         }
     }
 
-    pub unsafe fn enable(&self, irq: u8, isr: u32) {
+    pub unsafe fn enable(&self, irq: u8, isr: u64) {
         (*self.table)[irq] = idt::entry::new(
             isr,
             1 << 3,
-            idt::PM_32 | idt::PRESENT
+            idt::INTR_GATE | idt::PRESENT
         );
 
         pic::enable(irq);
     }
 
     pub unsafe fn load(&self) {
-        (*self.table)[exception::PF] = idt::entry::new(exception::page_fault(), 1 << 3, idt::PM_32 | idt::PRESENT);
+        (*self.table)[exception::PF] = idt::entry::new(exception::page_fault(), 1 << 3, idt::INTR_GATE | idt::PRESENT);
 
         idt::load(self.reg);
         pic::remap();

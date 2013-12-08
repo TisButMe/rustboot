@@ -38,6 +38,6 @@ unsafe fn ex14() {
 
 #[fixed_stack_segment]
 #[inline(never)]
-pub unsafe fn page_fault() -> u32 {
-    0 as u32
+pub unsafe fn page_fault() -> u64 {
+    0 as u64
 }

@@ -1,4 +1,5 @@
 use cpu::interrupt;
+use super::io;
 pub mod pic;
 pub mod vga;
 pub mod keyboard;
